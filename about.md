@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 
-又懒又好强
+又懒又好强 :D
 
 ## Contact me
 
