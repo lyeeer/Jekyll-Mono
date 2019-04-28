@@ -3,9 +3,9 @@ layout: post
 title: test pic
 author: lyeeer
 ---
-#title 1
+# title 1
 [TOC]
 ## stop1
-@import "001.PNG"
+<img src="{{ site.baseurl }}/images/001.jpg" style="width: 400px;"/>
 ## step2
 ## step3
