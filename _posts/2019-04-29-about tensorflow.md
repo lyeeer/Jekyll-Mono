@@ -113,7 +113,9 @@ ckpt模式：（方便灵活）
 
 怎么存？
 
-`Saver=tf.train.Saver(max_to_keep=4, keep_checkpoint_every_n_hours=2) Saver.save(sess,ckpt_file_path,global_step)#global_step为存储步长`
+`Saver=tf.train.Saver(max_to_keep=4, keep_checkpoint_every_n_hours=2)`
+
+` Saver.save(sess,ckpt_file_path,global_step)#global_step为存储步长`
 
 **模型恢复**
 
@@ -129,8 +131,9 @@ MetaGraph的protocolbuffer格式的文件，包括计算图，数据流， 以�
 
 存储示例：
 
-`constant_graph = graph_util.convert_variables_to_constants(sess, sess. 			graph_def, ['op_to_store'])` 
-`	with tf.gfile.FastGFile('./tmp2/pbplus.pb', mode=' wb') as f: 										f.write(constant_graph.SerializeToString())`
+`constant_graph = graph_util.convert_variables_to_constants(sess, sess. 	graph_def, ['op_to_store'])` 
+
+`with tf.gfile.FastGFile('./tmp2/pbplus.pb', mode=' wb') as f:` 			`f.write(constant_graph.SerializeToString())`
 
 ------------------------------------
 
@@ -141,7 +144,10 @@ EagerExecution采用直接定义输入变量的模式，不使用placeholder
 当启动EagerExecution时，运算会即刻执行，无需Session.run()就可以把它们的值返回到Python
 
 `import tensorflow.contrib.eager as tfe`
+
 `tfe.enable_eager_execution()`
 
-EagerExecution中不能自动调用GPU资源 :如果要在EagerExecution中使用GPU计算资源，则需要显式地将 tensor移动到指定的GPU中`a = a.gpu() # copies tensor to default GPU (GPU0)` 
+EagerExecution中不能自动调用GPU资源 :如果要在EagerExecution中使用GPU计算资源，则需要显式地将 tensor移动到指定的GPU中
+
+`a = a.gpu() # copies tensor to default GPU (GPU0)` 
 
