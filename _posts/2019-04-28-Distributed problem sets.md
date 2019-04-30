@@ -41,8 +41,11 @@ author: lyeeer
 
 异步不会再去区分阻塞非阻塞，对于用户进程，接到异步通知后，就直接操作进程用户态空间里的数据即可。
 
-
 ## 2.搭建Apache Thrift环境并编写同步和异常Helloworld例子 
+
+
+
+
 
 -------------------------
 0408
@@ -51,9 +54,24 @@ author: lyeeer
 ## 2.什么是软件协同开发？
 
 
+
+
+
 -------------------------
 0417
 ## 1.熟悉Java语言的反射机制
+
+在运行状态中，允许改变程序结构或变量类型，这种语言称为动态语言。虽然java不属于动态语言，但具有一个动态相关机制：reflection，即可以在运行时加载、探知、使用编译期间完全未知的class。
+
+即在JVM运行期间通过查找到相应的类，通过类获取其属性以及方法来创造对象。
+
+例如通过反射构造类：
+
+​	1).Class clazz=Class.formName("com.tlc.Person");#通过class的静态方法获取对象
+
+​	2).使用newInstance()或者newInstance（Object....params）创建实例
+
+
 
 ## 2.read "The rise and fall of CORBA"一文
 
