@@ -6,7 +6,7 @@ author: lyeeer
 
 深度学习课程笔记
 
-（0429 主要介绍tensorflow的相关信息；0506 主要介绍人工神经网络原理；0513主要介绍卷积神经网络）
+（0429 主要介绍tensorflow的相关信息；0506 主要介绍人工神经网络原理；0513主要介绍卷积神经网络；0520介绍TFSlim）
 
 参考邱锡鹏《神经网络与深度学习》；nudt深度学习方法与实践课程
 
@@ -294,3 +294,141 @@ maximum pooling/mean polling
 python面向对象技术
 
 鸭子模式（duck）
+
+--------------------------
+
+-----------------------
+
+## TFSlim介绍
+
+TF-Slim是Tensorflow中一个轻量级的库，用于定义、训练和评估复杂的模型 
+
+### slim.repeat
+
+e.g. net = slim.repeat(net, 3, slim.conv2d, 256, [3, 3], scope='conv3')
+
+slim.repeat会自动给每一个卷积层的scopes命名为’conv3/conv3_1’, ’conv3/conv3_2’和’conv3/conv3_3'
+
+### slim.stack
+
+e.g. slim.stack(x, slim.fully_connected, [32, 64, 128], scope='fc') 
+
+TF-Slim的slim.stack操作允许用户用**不同的参数**重复调用同一种操作 slim.stack也为每一个被创建的操作创建一个新的tf.variable_scope
+
+### arg_scope
+
+拥有相同参数的操作，可放在一个arg_scope下，简化定义。把相同部分抽取出来，放在slim.arg_scope()里
+
+e.g.
+
+with slim.arg_scope([slim.conv2d], padding='SAME',	weights_initializer=tf.truncated_normal_initializer            (stddev =0.01) ,weights_regularizer=slim.l2_regularizer(0.5)): 
+
+​	net = slim.conv2d(inputs, 64, [11, 11], scope='conv1') 
+
+​	net = slim.conv2d(net, 128, [11, 11], padding='VALID', scope=' conv2') 
+
+### loss
+
+loss = slim.losses.softmax_cross_entropy(predictions, labels)  # Define the loss functions and get the total loss. 
+
+### training loop
+
+调用 slim.learning.create_train_op和slim.learning.train来实现优化
+
+slim.learning.train( train_op, logdir, number_of_steps=1000, save_summaries_secs=300, save_interval_secs=600)  
+
+1）train_op：用于计算loss和梯度
+
+2）logdir：checkpoints和event路径，number_of_steps限制梯度下降的步数;save_summaries_secs=300 每5分钟计算一次summaries，save_interval_secs=600:每10分钟存一 次checkpoint。
+
+---------------------------------
+
+## 学习经典网络，了解深度学习发展思路及脉络
+
+<img src="{{ site.baseurl }}/images/0429-004.png" style="width: 400px;"/>
+
+给出一个网络，算出计算量和节点数
+
+网络结构: 网络更深，更难训练。（参数太多容易过拟合/梯度消失问题/计算量膨胀）
+
+## *卷积类型*
+
+### 普通卷积
+
+<img src="{{ site.baseurl }}/images/0429-005.png" style="width: 400px;"/>
+
+### 分组卷积
+
+分组过程中，每个组里的内容是不互相通信的。最后只是单纯连在一起，是更好的融合吗？
+
+### 深度卷积
+
+每个channel分别做滤波，然后所有的结果拼接在一起。只提取空间特征，不考虑信道信息，只是在信道上做滤波
+
+卷积核的个数也和输入通道一致：k=C, 则输出通道个数和输入一致：C
+
+### 点卷积
+
+用k个核去卷积，逐点融合。不做空间滤波，只做信道上的融合。可以控制信道变化，起升维核降维的作用（k控制，k比c大，升维；k比c小，降维）
+
+一般和 Depthwise Convolution 配合使用，形成所谓通道分离卷积：
+
+ depthwise separable convolution = depthwise convolution + pointwise convolution（前面做一个深度卷积，后面做一个点卷积）
+
+从信息论的角度，通道数一直不变可以减少信息损失。恒等变换可以提取很多种不同形式的特征，也实现了特征的提取。
+
+### relu的问题（mobilenetV2）
+
+1）低维度数据坍塌 (collapses): 
+
+RelU 对于负的输入，输出全为零，造成信息丢失 
+
+ReLU 对于不同维度映射信息损失的效果如何？ 
+
+实验：n 个 2 维点数据 Xn∗2，经随机矩阵 T2∗mT 映射到 m 维再进行 ReLU 运算 再还原发现，m 小的时候信息损失较大 
+
+结论：channel 少的 feature map 后接 ReLU，可能会破坏 feature map 的信息 只有当输入流行可包含在输入空间的低维子空间中，ReLU 才能完整的保持输入流行的 信息
+
+ *故尽量在低维映射后不做 ReLu.*（relu的参数给它传上去，只能赋值为0了）
+
+2）Dead ReLU: 一个非常大的梯度经过一个 ReLU 神经元，更新过参数之后，这个神经元再也不会对任何数据有激活现象。从此所有流过这个神经元的梯度将都变成 0 ReLU 不可逆转 die 
+
+学习率设置得太高，发生 40% 的神经元死掉
+
+### 空洞卷积
+
+*pooling 会损失信息，影响 upsampling 效果*。可以在卷积的时候采样，所以不需要通过pooling减小图像尺度来增大卷积特征的感受野。
+
+<img src="{{ site.baseurl }}/images/0429-006.png" style="width: 400px;"/>
+
+隔一个选取一个进行采样来卷积。
+
+### 反卷积
+
+不是卷积的逆操作，而是为了上采样，扩大特征图的尺度。通过填充再通过正常卷积实现 
+
+<img src="{{ site.baseurl }}/images/0429-007.png" style="width: 400px;"/>
+
+<img src="{{ site.baseurl }}/images/0429-008.png" style="width: 400px;"/>
+
+## *结构化方法*
+
+### 全卷积结构
+
+FC 特征提取低效，更重要的是限制了输入图像的尺度。为适应输入尺度进行缩放实质对学习内容进行了扭曲
+
+### 残差网络
+
+加入残差通路，让网络更容易学习到恒等映射: 
+
+​		H(x)=x 比 F(x)=0 的映射更难学，显式把网络设计成 H(x) = F(x) + x（H是期望变换，F是变换的残差），降低了学习难度。
+
+残差把输出范围缩小到和参数初始化近似范围, 更重要的引入残差后，映射对输出的变化更敏感 
+
+残差模块：缓解梯度弥散（在后向传播算法中， 每一层处理都会逐渐减少向下传的梯度的分量），引入Skip Connection将梯度跨过多层处理，直接传递到前层。
+
+<img src="{{ site.baseurl }}/images/0429-009.png" style="width: 400px;"/>
+
+集成学习：训练多个分类器，最后投票决定结果。在集成决策元素比较充足的情况下，缺失一些元素不会影响太多决策结果。
+
+增加name_scope等增加代码可读，使tensorboard可视化结果看起来更整洁
